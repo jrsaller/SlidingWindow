@@ -1,4 +1,4 @@
-#Sliding Window
+# Sliding Window
 
 This project is designed to predict entrance population for Zion National Park.
 
