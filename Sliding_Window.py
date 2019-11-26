@@ -398,7 +398,7 @@ def askUser(data,a,weighted):
    elif a == 2:
        answer = predictDayUsingWeather(data,int(date[0:2]),int(date[2:4]),int(date[4:]),True)
    elif a == 4:
-       numDays = int(input("How many days back would you like to grab?"))
+       numDays = int(input("How many days back would you like to grab?(1 + this number grabbed)"))
        answer = getWindowForMDL(data,int(date[0:2]),int(date[2:4]),int(date[4:]),True,numDays)
        print(answer)
        return
