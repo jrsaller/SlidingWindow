@@ -185,9 +185,9 @@ def predictDay(data,month,day,year,p,weighted):
     
     #Last Years Window (Index Form)
     #One week
-    #LYWI = tools.dateRange(tools.dateToIndex([month,day,year-1]),7,6)
+    LYWI = tools.dateRange(tools.dateToIndex([month,day,year-1]),7,6)
     #One month
-    LYWI = tools.dateRange(tools.dateToIndex([month,day,year-1]),14,13)
+    #LYWI = tools.dateRange(tools.dateToIndex([month,day,year-1]),14,13)
     #Last Year Mega Window
     LY = []
     for index in LYWI:
@@ -201,6 +201,8 @@ def predictDay(data,month,day,year,p,weighted):
     lowWindow = LY[0:7]
     lowWindowAsArray = numpy.array(lowWindow)
     LD = numpy.linalg.norm(lowWindowAsArray-qAsArray)
+    if p:
+        print("First Window distance",LD)
     #get the average population of this year's window
     #TYA = avg(ThisYearsWindow)
     #loop over Last Years Mega Window, generate smaller windows to compare with this year
@@ -211,11 +213,14 @@ def predictDay(data,month,day,year,p,weighted):
         #calculate the average of the window
         #windowAverage = avg(window)
         tempdist = numpy.linalg.norm(windowAsArray-lowWindowAsArray)
-        
+        if p:
+            print("Calculate distance for window ",i+1,"  ",tempdist)
         if tempdist < LD:
             lowWindow = window
             lowWindowAsArray = windowAsArray
             LD = tempdist
+            if p:
+                print("New Low Distance")
             #print(lowWindow)
             #print(LD)
         #if the average of this window is closer to this years average, change so this window is the new closest window
@@ -289,6 +294,7 @@ def askUser(data,a,weighted):
 def plotData(lst,xlabel,ylabel):
     plt.plot(lst)
     plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
     plt.show()
 
     
@@ -299,11 +305,13 @@ def calcOverallError(data,weighted):
    #Calculating the percent error for the entire year of data
     percentLst = []
     highPercentDictionary = {}
-    #Loop starting Jan 1 2018 
-    for i in range(365,1011):
+    #Loop starting Jan 1 2018 going to October 6 2019
+    for i in range(365,1009):
         problem = False
         #Get the correct day in a list form [M, D, Y]
         day = tools.indexToDate(i)
+        if i == 1008:
+            print("Final Day",day)
         answer=predictDay(data,day[0],day[1],day[2],False,weighted)
         if data.getVal(i,0) == 0.0:
             problem = True
@@ -640,7 +648,7 @@ def calcOverallErrorModel3(data1,data2):
 def main():
     #data = setup(["Adjusted", "Day"])
     #data = setup(["Canyon Total Visitation", "Day"])
-    calc = input("Calculate overall, or ask user? (ask or calc)")
+    calc = input("Calculate overall, ask user, or predict week? (ask,calc,predict)")
     print("1.) Original Model (Population only)")
     print("2.) Weather model")
     print("3.) Combined 1 AND 2")
@@ -651,13 +659,15 @@ def main():
             data = setup(["Adjusted","Day"])
         elif a == 2:
             data = setup(["Max Temp","Adjusted","Day"])
-        askUser(data,a)
+        askUser(data,a,False)
+    else if calc in "predict":
+        
     else:
         
         if a == 1:
             data = setup(["Adjusted","Day"])
             #True for weighted
-            calcOverallError(data,True)
+            calcOverallError(data,False)
             #NO WEIGHTS = 14.74676
         elif a == 2:
             data = setup(["Max Temp","Adjusted","Day"])
