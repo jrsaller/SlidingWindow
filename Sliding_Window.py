@@ -88,8 +88,9 @@ def getWindowForMDL(data,month,day,year,p,numDays):
     for i in range(1,len(LY)-numDays):
         #get the window in a list
         window = LY[i:i+numDays+1]
-        print(len(window))
-        print(window)
+        if p:
+            print(len(window))
+            print(window)
         #windowAsArray = numpy.array(window)
         windowWeatherAsArray = []
         for item in window:
