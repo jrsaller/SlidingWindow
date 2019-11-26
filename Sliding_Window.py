@@ -15,6 +15,115 @@ def setup(dataset):
 def avg(lst):
     return sum(lst)/len(lst)
 
+def getWindowForMDL(data,month,day,year,p,numDays):
+    ThisYearIndex = tools.dateRange(tools.dateToIndex([month,day-1,year]),numDays,0)
+    ThisYearsWindow = []
+    #populate This Year's window with data from our spreadsheet
+    for index in ThisYearIndex:
+        #GET POPULATION AND WEATHER
+        ThisYearsWindow.append((data.getVal(index,0),data.getVal(index,1)))
+    #print(ThisYearsWindow)
+    
+    DayPopulationWeather = []
+    
+    for i in range(len(ThisYearIndex)):
+        #HOLD DAY, POPULATION, WEATHER
+        DayPopulationWeather.append((tools.indexToDate(ThisYearIndex[i]),ThisYearsWindow[i][0],ThisYearsWindow[i][1]))
+    if p:
+        print("\n======LAST WEEK WINDOW========")
+        for item in DayPopulationWeather:
+            print(str(item[0]) + "\t" + str(item[1]) + "\t" + str(item[2]))
+        print("==============================")
+    
+    #qWeatherPopulationArray = []
+    #for item in ThisYearsWindow:
+    #    qWeatherPopulationArray.append((item[0],item[1]))
+    #ThisYearWeatherPopulationArray = numpy.array(ThisYearsWindow[:])
+    ThisYearWeatherArray = []
+    for item in ThisYearsWindow:
+        ThisYearWeatherArray.append(item[0])
+    ThisYearWeatherArray = numpy.array(ThisYearWeatherArray)
+    #print("46",ThisYearWeatherArray)
+    
+    #Last Years Window (Index Form)
+    LYWI = tools.dateRange(tools.dateToIndex([month,day,year-1]),7,6)
+    #Last Year Mega Window
+    LY = []
+    for index in LYWI:
+        LY.append((data.getVal(index,0),data.getVal(index,1)))
+        #GET WEATHER POPULATION
+    
+    if p:    
+        print("\n======LAST YEAR BIG WINDOW======")
+        for item in range(len(LYWI)):
+            print(str(tools.indexToDate(LYWI[item])) + "\t" + str(LY[item][0]) + "\t" + str(LY[item][1]))
+        print("=================================")
+    
+    
+    LastYearWeather = []
+    for item in LY:
+        LastYearWeather.append(item[0])
+    
+    
+    #lowestAvg = avg(LastYearWeather)
+    lowWindow = LY[0:numDays+1]
+    #lowWindowAsArray = numpy.array(lowWindow)
+    lowWindowWeatherAsArray = []
+    for item in lowWindow:
+        lowWindowWeatherAsArray.append(item[0])
+    lowWindowWeatherAsArray=numpy.array(lowWindowWeatherAsArray)
+    #print("75",lowWindowWeatherAsArray)
+    #print("76",ThisYearWeatherArray)
+    #LD = numpy.linalg.norm(lowWindowAsArray-ThisYearWeatherPopulationArray)
+    LD = numpy.linalg.norm(lowWindowWeatherAsArray-ThisYearWeatherArray)
+    #print("79",LD)
+    if p:
+        print(lowWindow)
+    #get the average weather of this year's window
+    #ThisYearWeather = []
+    #for item in ThisYearsWindow:
+    #    ThisYearWeather.append(item[1]) 
+    #TYA = avg(ThisYearWeather)
+    #loop over Last Years Mega Window, generate smaller windows to compare with this year
+    for i in range(1,len(LY)-numDays):
+        #get the window in a list
+        window = LY[i:i+numDays+1]
+        print(len(window))
+        print(window)
+        #windowAsArray = numpy.array(window)
+        windowWeatherAsArray = []
+        for item in window:
+            windowWeatherAsArray.append(item[0])
+        windowWeatherAsArray=numpy.array(windowWeatherAsArray)
+        dist = numpy.linalg.norm(windowWeatherAsArray-ThisYearWeatherArray)
+        #TempLastYearWeather = []
+        #calculate the average of the window
+        #for item in window:
+        #    TempLastYearWeather.append(item[1]) 
+        #windowAverage = avg(TempLastYearWeather)
+        #if the average of this window is closer to this years average, change so this window is the new closest window
+        #if p:
+        #    print(TYA)
+        #    print(windowAverage)
+        #    print(lowestAvg)
+        #    print("=================")
+        #print("Line 108",LD)
+        #print("Line 109",dist)
+        if dist < LD:
+            if p:
+                print("WINDOW HAS CHANGED")
+            LD = dist
+            lowWindow = window
+    if p:
+        print("\n=========SELECTED LOW WINDOW=========")
+        for item in lowWindow:
+            print(item)
+        print("=====================================")
+    return lowWindow
+    
+
+
+
 def predictDayUsingWeather(data,month,day,year,p):
     ThisYearIndex = tools.dateRange(tools.dateToIndex([month,day-1,year]),6,0)
     ThisYearsWindow = []
@@ -288,6 +397,11 @@ def askUser(data,a,weighted):
        answer = predictDay(data,int(date[0:2]),int(date[2:4]),int(date[4:]),True,weighted)
    elif a == 2:
        answer = predictDayUsingWeather(data,int(date[0:2]),int(date[2:4]),int(date[4:]),True)
+   elif a == 4:
+       numDays = int(input("How many days back would you like to grab?"))
+       answer = getWindowForMDL(data,int(date[0:2]),int(date[2:4]),int(date[4:]),True,numDays)
+       print(answer)
+       return
    print("You should see " + str(answer) + " People on that day")
 
 #Plot the list, using the provided xlabel for the x-axis and ylabel for the y-axis
@@ -652,16 +766,17 @@ def main():
     print("1.) Original Model (Population only)")
     print("2.) Weather model")
     print("3.) Combined 1 AND 2")
+    print("4.) Get Window for MDL")
     a = int(input("What model would you like to use?"))
     
     if calc in "ask":
         if a == 1:
             data = setup(["Adjusted","Day"])
-        elif a == 2:
+        elif a == 2 or a==4:
             data = setup(["Max Temp","Adjusted","Day"])
         askUser(data,a,False)
-    else if calc in "predict":
-        
+    elif calc in "predict":
+        print("Coming Soon!")
     else:
         
         if a == 1:
