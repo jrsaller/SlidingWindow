@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 def dateToIndex(date):
     [M,D,Y] = date
     total = D-1
+    #This corrects for the fact that January 1st is 0 days away, not January 0th.
 
     while M > 12:
         Y += 1
@@ -81,7 +82,6 @@ def indexToDate(date):
 
 def correctDate(A):
     #This returns a corrected date from something with the day off.
-    #DO NOT ATTEMPT TO MODIFY MONTH OR YEAR!!
     #If you want 3 days after March 30th, pass in
     #   [4,31] - [4,32] - [4,33]    
     days = dateToIndex(A)
@@ -89,7 +89,7 @@ def correctDate(A):
     return date
 
 def yearGrowth(Y):
-    #THIS IS A BAD FUNCTION AND SHOULD BE REWRITTEN!!
+    #THIS IS A BAD FUNCTION AND SHOULD BE REWRITTEN OR NOT USED!!
     #Its intended purpose is to predict how much higher Y's zion visitation
     #   will be than Y-1's.
     #Returns float multiplier.
@@ -113,10 +113,13 @@ def extractSpreadsheet(file,cols = False):
     else:
         return dataframeToGrid(df)
     
-def dataframeToGrid(Data):
-    dfl = df.value.tolist()
+def dataframeToGrid(df):
+    dfl = df.values.tolist()
     return Grid(dfl)
+
 def exclusiveDataframeToGrid(Data,cols):
+    #Note: If you name every column in the spreadsheet, it seems to change
+    #   everything to NaN`s
     df = pd.DataFrame(Data, columns=cols)
     dfl = df.values.tolist()
     return Grid(dfl)
@@ -157,120 +160,54 @@ def dateRange(date,left,right):
             days.append(i)
         return days
 
-    
-def plotPCA(data,pca1,pca2):
-    #Plots the two given eigenvectors onto a 2D matplotlib scatter plot.
-    points = []
-    for line in data.getData():
-        x = 0
-        for i in range(len(pca1)):
-            x += pca1[i]*line[i]
-        y = 0
-        for i in range(len(pca2)):
-            y += pca2[i]*line[i]
-        points.append([x,y])
-    df = pd.DataFrame(points,columns = ["PCA1","PCA2"])
-    ax1 = df.plot.scatter(x='PCA1',y='PCA2')
-    df.plot()
+#UNDOCUMENTED!
+def scatter(x,y):
+    data = [x,y]
+    data = Grid(data)
+    data.transpose()
+    points = data.getData()
+    df = pd.DataFrame(points,columns = ["X","Y"])
+    ax1 = df.plot.scatter(x="X",y="Y")
     plt.show()
 
-def plotPCAColor(data,pca1,pca2,results):
-    #This plots the data with the points colored by their corresponding
-    #   values in results.
-    #NOTE: results comes in a vector like [[t,h,i,s]]
-    points = []
-    for i in range(data.getHeight()):
-        x = 0
-        for j in range(len(pca1)):
-            x += pca1[j]*data.getVal(i,j)
-        y = 0
-        for j in range(len(pca2)):
-            y += pca2[j]*data.getVal(i,j)
-        points.append([x,y,results[0][i]])
-    df = pd.DataFrame(points,columns = ["PCA1","PCA2","Diagnosis"])
-    ax1 = df.plot.scatter(x='PCA1',y='PCA2',c='Diagnosis',colormap = 'rainbow')
-    plt.show()  
+#UNDOCUMENTED!
+def scatterColor(x,y,results,colors):
+    data = [x,y,results]
+    data = Grid(data)
+    data.transpose()
+    points = data.getData()
+    df = pd.DataFrame(points,columns = ["X","Y","R"])
+    ax1 = df.plot.scatter(x="X",y="Y",c="R",colormap = colors)
+    plt.show()
 
-def numMap(val,L1,R1,L2,R2):
-    #Maps a number between range 1 to range 2
-    return ((val-L1)/(R1-L1))*(R2-L2) + L2
-
-def covarianceMatrix(data):
-    #Finds covariance matrix, useful for many statistical operations,
-    #   namely finding eigenvalues/eigenvectors.
-    #[Cov(0,0)   Cov(0,1)  ... Cov(0,n)]
-    #[Cov(1,0)   Cov(1,1)        ...   ]
-    #[  ...                ...         ]
-    #[Cov(n,0)      ...        Cov(n,n)]
-    width = data.getWidth()
-    matrix = Grid([[()]*width for i in range(width)])
-    for i in range(width):
-        for j in range(width):
-            #if matrix.getVal(i,j) == False:
-            matrix.setVal(i,j,data.covariance(i,j))
-            #matrix.setVal(j,i,matrix.getVal(i,j))
-    return matrix
-
-def eigen(cov,absolute = False):
-    ##Calculates [Value, Vector] array
-    #print(cov)
-    A = np.array(cov)
-    #data.print()
-    val, vec = LA.eig(A)
-    vectors = []
-    for i in range(len(val)):
-        vectors.append([val[i],list(vec[:,i])])
-    ##If absolute, consider the absolute value of Value w/ negative vectors
-    if absolute:
-        for i in range(len(vectors)):
-            if vectors[i][0] < 0:
-                vectors[i][0] *= -1
-                for j in range(len(vectors[i][1])):
-                    vectors[i][1][j] *= -1
-    ##Sort by greatest Eigenvalue
-    ##  (The vectors with the greatest eigenvalue are often the most significant
-    done = False
-    while not done:
-        done = True
-        for i in range(len(vectors)-1):
-            if vectors[i][0] < vectors[i+1][0]:
-                vectors[i],vectors[i+1] = vectors[i+1].copy(),vectors[i].copy()
-                done = False
-    ##Transform eigenvector into its unit vector
-    ##  (Eigenvectors don't care about magnitude, just direction.)
-    for i in range(len(vectors)):
-        size = 0
-        for j in range(len(vectors[i][1])):
-            size += vectors[i][1][j]**2
-        size = math.sqrt(size)
-        for j in range(len(vectors[i][1])):
-            vectors[i][1][j] /= size
-    return vectors
-
+def line(x,y):
+    data = [x,y]
+    data = Grid(data)
+    data.transpose()
+    points = data.getData()
+    df = pd.DataFrame(points,columns = ["X","Y"])
+    ax1 = df.plot.line(x="X",y="Y")
+    plt.show()
+    
 class Grid:
     def __init__(self,data):
         self.mData = data.copy()
-    def sub(self,row,col,val): #Just by element!
-        self.mData[row][col] -= val
-    def add(self,row,col,val): #Just by element!
-        self.mData[row][col] += val
     def print(self):
         print(self.mData)
     def printCol(self,col):
         for i in range(self.getHeight()):
             print(self.mData[i][col])
-    def export(self,name):
-        #This is for if you wanna write it to a file.
-        return name + str(self.mData) + "\n"
     def getData(self):
         return self.mData
-    def setData(Self,data):
+    def setData(self,data):
         self.mData = data.copy()
     def getVal(self,row,col):
         return self.mData[row][col]
     def setVal(self,row,col,val):
         self.mData[row][col] = val
     def getHeight(self):
+        return len(self.mData)
+    def getLength(self):
         return len(self.mData)
     def getWidth(self):
         return len(self.mData[0])
@@ -282,7 +219,7 @@ class Grid:
 
         #This function silently errors if the value it tries to access is a 0
         #   because of missing data. Due to variables which CAN be 0, such as
-        #   rainfall or temperature(F), I've elected to not have it bark at you.
+        #   rainfall or temperature, I've elected to not have it bark at you.
         #   If you want that anyway, enable pedantic.
 
         if type(row) == list:
@@ -301,34 +238,20 @@ class Grid:
             outs.append(x)
         return outs
 
-    def include(self,ticket):
-        #Reformats data to only include variables in ticket
-        self.transpose()
-        off = 0
+
+#UNDOCUMENTED!
+    def splitAtColVal(self,col,val):
+        left = []
+        right = []
         for i in range(self.getHeight()):
-            if i not in ticket:
-                self.mData.pop(i-off)
-                off += 1
-        self.transpose()
+            if self.mData[i][col] < val:
+                left.append(self.mData[i])
+            else:
+                right.append(self.mData[i])
+        left = Grid(left)
+        right = Grid(right)
+        return [left,right]
 
-    def exclude(self,ticket):
-        #Reformats data to exclude variables in ticket
-        self.transpose()
-        off = 0
-        for i in range(self.getHeight()):
-            if i in ticket:
-                self.mData.pop(i-off)
-                off += 1
-        self.transpose()
-
-
-    def smooth(self):
-        #Replaces all unknowns with their column's average.
-        #This is quite lazy, a better smoothing function is in order.
-        for row in range(self.getHeight()):
-            for col in range(self.getWidth()):
-                if self.mData[row][col] == "?":
-                    self.mData[row][col] = self.getAverageCol(col)
     def transpose(self):
         self.mData = [[self.mData[j][i] for j in range(self.getHeight())] for i in range(self.getWidth())]
     
@@ -391,60 +314,3 @@ class Grid:
                 m = self.getVal(i,col)
                 index = i
         return self.getData()[index]
-    
-    def getAverageCol(self,col):
-        #Average value in column
-        tot = 0
-        ct = 0
-        for line in self.mData:
-            if line[col] != "?":
-                tot += line[col]
-                ct += 1
-        if ct == 0:
-            return 0
-        return tot/ct
-    
-    def centerColumn(self,col):
-        #Subtracts the average from every item in the column.
-        #I don't recommend calling this alone, use center().
-        ave = self.getAverageCol(col)
-        for i in range(self.getHeight()):
-            if self.getVal(i,col) != "?":
-                self.sub(i,col,ave)       
-    def center(self):
-        #Subtracts the average from all items, centering the data about origin.
-        #This is useful for statistical analysis.
-        for i in range(self.getWidth()):
-            self.centerColumn(i)
-        
-    def normalizeColumn(self,col,normalMin,normalMax,centered = True):
-        #Centers column and re-maps it from normalMin to normalMax
-        if centered:
-            self.centerColumn(col)
-        minimum = self.getMinimum(col)
-        maximum = self.getMaximum(col)
-        for i in range(self.getHeight()):
-            if self.getVal(i,col) == "?":
-                continue
-            val = self.getVal(i,col)
-            val = numMap(val,minimum,maximum,normalMin,normalMax)
-            self.setVal(i,col,val)
-    def normalize(self,normalMin,normalMax):
-        #Centers and re-maps all data from normalMin to normalMax
-        for i in range(self.getWidth()):
-            self.normalizeColumn(i,normalMin,normalMax)
-
-    def variance(self,col):
-        #Finds statistical variance of a column
-        return self.covariance(col,col)
-    def covariance(self,axis1,axis2):
-        #Finds statistcal relation between two columns.
-        #If this value is positive, there is a positive correlation.
-        # 0 = no correlation, - = anti-correlation.
-        tot = 0
-        ave1 = self.getAverageCol(axis1)
-        ave2 = self.getAverageCol(axis2)
-        for i in range(self.getHeight()):
-            tot += (self.getVal(i,axis1)-ave1)*(self.getVal(i,axis2)-ave2)
-        return tot/self.getHeight()
-
